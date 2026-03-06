@@ -1,7 +1,30 @@
 window.addEventListener('DOMContentLoaded', (ev) => {
+    const MODESWITCHER = document.getElementById("modeswitcher");
+    const TEXTBOX = document.getElementById("messagesender");
     const TEXTBOXPROMPT = document.getElementById("messagesenderprompt");
     var messageSent = false;
     var shiftHeld = false;
+    var textSperator = false;
+
+    function moveCaret(win, charCount) {
+        var sel, range;
+        if (win.getSelection) {
+            // IE9+ and other browsers
+            sel = win.getSelection();
+            if (sel.rangeCount > 0) {
+                var textNode = sel.focusNode;
+                var newOffset = sel.focusOffset + charCount;
+                sel.collapse(textNode, Math.min(textNode.length, newOffset));
+            }
+        } else if ( (sel = win.document.selection) ) {
+            // IE <= 8
+            if (sel.type != "Control") {
+                range = sel.createRange();
+                range.move("character", charCount);
+                range.select();
+            }
+        }
+    }
 
     function onModeChange(ev) {
         if (this.value != 0) {
@@ -15,6 +38,11 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                 break;
             case "Shift":
                 shiftHeld = true;
+                break;
+            case " ":
+                if (!this.textContent.includes('|') || !this.textContent.includes('@')) {
+                    textSperator = true;
+                }
                 break;
         }
     }
@@ -31,24 +59,25 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             if (this.textContent != "") {
                 this.textContent = "";
             }
+        } else if (textSperator) {
+            textSperator = false;
+            var textSolution = this.textContent;
+            textSolution = textSolution + "|"
+            if (textSolution[0] != '@') {
+                textSolution = "@" + textSolution;
+            }
+            TEXTBOXPROMPT.textContent = textSolution + "Send a Message";
+            this.textContent = textSolution;
+            moveCaret(window, textSolution.length);
         }
-    }
-    function onTextBoxFocusIn(ev) {
         if (TEXTBOXPROMPT) {
-            TEXTBOXPROMPT.style.visibility = "hidden";
-        }
-    }
-    function onTextBoxFocusOut(ev) {
-        if (TEXTBOXPROMPT && this.textContent == "") {
-            TEXTBOXPROMPT.style.visibility = "visible";
+            TEXTBOXPROMPT.style.visibility = this.textContent != "" ? "hidden" : "visible";
         }
     }
 
 
-    document.getElementById("modeswitcher")?.addEventListener('change', onModeChange);
-    document.getElementById("messagesender")?.addEventListener('focusin', onTextBoxFocusIn);
-    document.getElementById("messagesender")?.addEventListener('focusout', onTextBoxFocusOut);
-    document.getElementById("messagesender")?.addEventListener('keydown', onTextBoxKeyDown);
-    document.getElementById("messagesender")?.addEventListener('keyup', onTextBoxKeyUp);
-    document.getElementById("messagesender")?.addEventListener('input', onTextBoxInput);
+    MODESWITCHER?.addEventListener('change', onModeChange);
+    TEXTBOX?.addEventListener('keydown', onTextBoxKeyDown);
+    TEXTBOX?.addEventListener('keyup', onTextBoxKeyUp);
+    TEXTBOX?.addEventListener('input', onTextBoxInput);
 });

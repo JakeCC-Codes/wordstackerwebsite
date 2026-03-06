@@ -1,5 +1,5 @@
 body {
-    background-color: rgb(255, 232, 211);
+    background-color: #FFE8D3;
 }
 
 .flex-height {
@@ -23,6 +23,7 @@ body {
 
 .default-text-color {
     color: darkslateblue;
+    user-select:none;
 }
 
 .absolute-width {
@@ -51,5 +52,55 @@ body {
     fill: darkslateblue;
 }
 .social-icon:hover {
+    fill: gray;
+}
+
+.message-sender-box {
+    background-color: peachpuff;
+    min-width: 50%;
+
+    border-radius: 500px;
+    border-color: #FAEBD2;
+    border-style: solid;
+    border-width: thin;
+
+    box-shadow: 0px 0px 5px darkslateblue;
+}
+.message-sender-box:hover {
+    border-color: white;
+    box-shadow: 0px 0px 4px darkslateblue;
+}
+
+#messagesender:hover {
+    color: black;
+}
+#messagesender, #messagesender:focus {
+    max-height: 60px;
+    min-width: 100%;
+    color: darkslateblue;
+    z-index: 2;
+    padding-top: 3%;
+    padding-bottom: 3%;
+}
+
+#messagesenderprompt {
+    position:fixed;
+    top: 90.25%;
+    color:#BBB2A5;
+    user-select:none;
+    z-index: 1;
+}
+
+.message-sender-box-item {
+    margin-left: 1%;
+    margin-right: 1%;
+}
+.message-sender-box-icon {
+    width: 30px;
+    height: 22px;
+    fill: darkslateblue;
+}
+
+.message-sender-box-icon:hover {
     fill: gray;
 }
