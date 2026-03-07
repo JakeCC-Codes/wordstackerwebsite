@@ -67,13 +67,16 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         const d1 = document.createElement('div');
         const a1 = document.createElement('a');
         const d2 = document.createElement('div');
+        const date1 = new Date().toLocaleString();
 
         d1.classList.add('flex-width');
         d1.id = "block-" + messageCount;
         a1.href = "#" +  d1.id;
+        a1.title = date1;
         d2.classList.add('block-item');
         d2.setAttribute('tag', tag);
         d2.setAttribute('text', text);
+        d2.setAttribute('time', date1);
         if (lastMessage?.getAttribute('tag') == tag) {
             d2.innerHTML = text;
         } else {
@@ -92,7 +95,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         ], {
             duration: FALLSPEED * 1000, // Add settings for this value
             iterations: 1
-        }).play();
+        }).play(); // TODO: Animate Dust Particles and Stack Size
 
         d2.animate([ // Clamp this value lol
             { marginLeft: (messageCount/WOBBLELIMIT) + 'px'},
@@ -149,8 +152,8 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     function onTextBoxInput(ev) {
         if (messageSent) {
             messageSent = false;
-            onMessageSentBefore(this.innerHTML);
-            if (this.textContent != "") {
+            if (this.innerHTML != "") {
+                onMessageSentBefore(this.innerHTML);
                 this.textContent = "";
             }
         } else if (textSperator) {
