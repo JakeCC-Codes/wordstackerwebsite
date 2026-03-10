@@ -1,11 +1,11 @@
 :root {
-    --bg-colour: #FFE8D3;
-    --bg-item-colour: peachpuff;
-    --bg-item-dark-colour: #BBB2A5;
     --accent-colour: darkslateblue;
-    --highlight-colour: white;
-    --panel-bg-colour: lightgoldenrodyellow;
-    --panel-highlight-colour: gray;
+    --bg-colour: #FFE8D3;
+    --bg-panel-colour: lightgoldenrodyellow;
+    --blockstack-colour: peachpuff;
+    --highlight-block-colour: white;
+    --highlight-panel-colour: gray;
+    --texthint-colour: #BBB2A5;
 }
 
 body {
@@ -19,12 +19,12 @@ ol li {
 li, .block-item {
     padding: 2px 10px;
     margin-bottom: 2px;
-    background-color: var(--bg-item-colour);
+    background-color: var(--blockstack-colour);
     box-shadow: 2px 2px 2px var(--accent-colour);
     z-index: 3;
 }
 .block-item:hover {
-    outline: thin solid var(--highlight-colour);
+    outline: thin solid var(--highlight-block-colour);
     box-shadow: 1px 1px 2px var(--accent-colour);
 }
 
@@ -33,7 +33,7 @@ a, a:hover, a:visited {
     outline:none;
     text-decoration:none;
     color:inherit;
-    -webkit-tap-highlight-color: var(--highlight-colour);
+    -webkit-tap-highlight-color: var(--highlight-block-colour);
     color: var(--accent-colour);
 }
 
@@ -108,11 +108,11 @@ a, a:hover, a:visited {
 }
 
 .panel-top {
-    background-color: var(--panel-bg-colour); box-shadow: 0px 1px 10px var(--accent-colour);
+    background-color: var(--bg-panel-colour); box-shadow: 0px 1px 10px var(--accent-colour);
 }
 
 .panel-bottom {
-    background-color: var(--panel-bg-colour); box-shadow: 0px -1px 10px var(--accent-colour);
+    background-color: var(--bg-panel-colour); box-shadow: 0px -1px 10px var(--accent-colour);
 }
 
 .social-container {
@@ -127,11 +127,11 @@ a, a:hover, a:visited {
     fill: var(--accent-colour);
 }
 .social-icon:hover {
-    fill: var(--panel-highlight-colour);
+    fill: var(--highlight-panel-colour);
 }
 
-.message-sender-box {
-    background-color: var(--bg-item-colour);
+.blockstack-sender {
+    background-color: var(--blockstack-colour);
     min-width: 50%;
 
     border-radius: 500px;
@@ -141,15 +141,15 @@ a, a:hover, a:visited {
 
     box-shadow: 0px 0px 3px var(--accent-colour);
 }
-.message-sender-box:hover {
-    border-color: var(--highlight-colour);
+.blockstack-sender:hover {
+    border-color: var(--highlight-block-colour);
     box-shadow: 0px 0px 5px var(--accent-colour);
 }
 
-#messagesender:hover {
-    color: var(--panel-highlight-colour);
+#blockstacksender:hover {
+    color: var(--highlight-panel-colour);
 }
-#messagesender, #messagesender:focus {
+#blockstacksender, #blockstacksender:focus {
     max-height: 60px;
     min-width: 100%;
     color: var(--accent-colour);
@@ -158,32 +158,32 @@ a, a:hover, a:visited {
     padding-bottom: 3%;
 }
 
-#messagesenderprompt {
+#blockstackinputprompt {
     position:fixed;
     top: 90.25%;
-    color: var(--bg-item-dark-colour);
+    color: var(--texthint-colour);
     user-select:none;
     z-index: 6;
 }
 
-.message-sender-box-item {
+.blockstack-sender-item {
     margin-left: 1%;
     margin-right: 1%;
 }
-.message-sender-box-icon {
+.blockstack-sender-edit {
     width: 30px;
     height: 22px;
     fill: var(--accent-colour);
 }
 
-.message-sender-box-icon:hover {
-    fill: var(--panel-highlight-colour);
+.blockstack-sender-edit:hover {
+    fill: var(--highlight-panel-colour);
 }
 
 .render-infront {
     z-index: 5;
 }
 
-#blockstackcounter {
+#blockstackcount {
     visibility: hidden;
 }

@@ -1,31 +1,43 @@
 window.addEventListener('DOMContentLoaded', (ev) => {
     const WOBBLELIMIT = 400;
-    const WOBBLESPEED = 1;
-    const FALLSPEED = 0.75; // TODO: Space is at 5000 blocks, blocks fall slower and darkmode
+    const WOBBLESPEED = 0.75;
+    const FALLSPEED = 0.75; // TODO: Space is at 10,500 blocks, blocks fall slower and darkmode
 
     const MODESWITCHER = document.getElementById("modeswitcher");
-    const TEXTBOX = document.getElementById("messagesender");
-    const TEXTBOXPROMPT = document.getElementById("messagesenderprompt");
-    const BLOCKSTACK = document.getElementById("blockstack");
-    const BLOCKSTACKCOUNTER = document.getElementById("blockstackcounter");
-    var messageSent = false;
-    var shiftHeld = false;
-    var textSperator = false;
-    var messageCount = 0;
-    var lastMessage;
+    const BSTXSENDER = document.getElementById("blockstacksender");
+    const BSTXSENDERPROMPT = document.getElementById("blockstackinputprompt");
+    const BSTXCONTAINER = document.getElementById("blockstack");
+    const BSTXCONTAINERCOUNT = document.getElementById("blockstackcount");
+    let messageSent = false;
+    let shiftHeld = false;
+    let textSperator = false;
+    let messageCount = 0;
+    let lastMessage;
 
+    /**
+     * 
+     * @param {number} v 
+     * @param {number} m 
+     * @param {number} M 
+     * @returns {number}
+     */
     function clamp(v, m, M) {
         return v < m ? m : v > M ? M : v;
     }
 
+    /**
+     * 
+     * @param {Window} win 
+     * @param {number} charCount 
+     */
     function moveCaret(win, charCount) {
-        var sel, range;
+        let sel, range;
         if (win.getSelection) {
             // IE9+ and other browsers
             sel = win.getSelection();
             if (sel.rangeCount > 0) {
-                var textNode = sel.focusNode;
-                var newOffset = sel.focusOffset + charCount;
+                let textNode = sel.focusNode;
+                let newOffset = sel.focusOffset + charCount;
                 sel.collapse(textNode, Math.min(textNode.length, newOffset));
             }
         } else if ( (sel = win.document.selection) ) {
@@ -37,6 +49,11 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             }
         }
     }
+    /**
+     * 
+     * @param {string} textSolution 
+     * @returns {string}
+     */
     function formatText(textSolution) {
         textSolution = textSolution + " | ";
         if (textSolution[0] != '@') {
@@ -44,6 +61,10 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         }
         return textSolution;
     }
+    /**
+     * 
+     * @param {string} url 
+     */
     function copyLink(url) {
         navigator.clipboard.writeText(url).then(() => {
             alert("Link Copied to Clipboard: " + url);
@@ -52,104 +73,137 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         });
     }
 
-    function onMessageAnimate(blockObj, intensity = 0) {
+    /**
+     * 
+     * @param {HTMLDivElement} blockObj 
+     * @param {number} intensity 
+     */
+    function _onBlockAnimate(blockObj, intensity = 0) {
         const randAudioValue = Math.floor(Math.random() * 10) % 5 +1;
         // Wobble Animation
         blockObj.animate([ // Clamp this value lol
             { marginLeft: (messageCount/WOBBLELIMIT) + 'px'},
-            { marginLeft: -(messageCount/WOBBLELIMIT) + 'px'},
-            { marginLeft: (messageCount/WOBBLELIMIT) + 'px'},
+            { marginLeft: -(messageCount/WOBBLELIMIT) + 'px'}
         ], {
             duration: WOBBLESPEED * 1000,
-            iterations: Infinity
+            direction: "alternate",
+            iterations: "Infinity",
+            easing: "ease-in-out"
         }).play();
 
         // Falling Animation
-        var fall = blockObj.animate([
+        let fall = blockObj.animate([
             { marginTop: '-500px' },
             { marginTop: '0px' }
         ], {
             duration: (FALLSPEED - intensity*0.5) * 1000, // Add settings for this value
-            iterations: 1
-        }); // TODO: Animate Dust Particles and Stack Size
+            easing: "linear", // In the robble use linear In space use ease-out
+        });
         fall.play();
+
         fall.finished.then(() => {
-            var sfx = new Audio("../audio/sfx_blockfall" + randAudioValue + ".mp3");
+            let sfx = new Audio("../audio/sfx_blockfall" + randAudioValue + ".mp3");
             sfx.volume = clamp(intensity + 0.2, 0.2, 1);
             sfx.play();
             blockObj.animate([
-                {backgroundColor: 'lightyellow'},
-                {backgroundColor: 'initial'}
+                {backgroundColor: 'lightyellow'}
             ], {
-                duration: (intensity*10+1) * 600,
-                iterations: 1
+                duration: (intensity*5+1) * 600,
+                direction: "reverse"
             }).play();
-            if (BLOCKSTACKCOUNTER) {
-                BLOCKSTACKCOUNTER.textContent = "Blocks Stacked: " + messageCount;
-                BLOCKSTACKCOUNTER.style.visibility = "visible";
+            if (BSTXCONTAINERCOUNT) {
+                BSTXCONTAINERCOUNT.textContent = "Blocks Stacked: " + messageCount;
+                BSTXCONTAINERCOUNT.style.visibility = "visible";
             }
         });
     }
 
     //function onMessageSent(tag, text) {}
 
-    function onMessageSentBefore(textEnquiry) {
+    /**
+     * 
+     * @param {string} textEnquiry 
+     * @param {string} dateTooltip 
+     * @returns {boolean}
+     */
+    function _onBlockStackBefore(textEnquiry, requestDate) {
         if (textEnquiry == "") {
             return false;
         }
         const atSymbIndex = textEnquiry.lastIndexOf('@');
-        const textStartIndex = textEnquiry.lastIndexOf('|');
         const textEndIndex = textEnquiry.lastIndexOf("<div>");
-        var tag = textEnquiry.slice(atSymbIndex, textEnquiry.at(textStartIndex-1) == ' ' ? textStartIndex-1 : textStartIndex);
-        if (tag == '') {tag = TEXTBOXPROMPT.textContent.slice(0, TEXTBOXPROMPT.textContent.lastIndexOf('|')-1);}
-        var text = textEnquiry.slice(textEnquiry.at(textStartIndex+1) == ' ' ? textStartIndex+2 : textStartIndex+1, textEndIndex);
+        const textFormat = textEnquiry.lastIndexOf('|') == -1 ? [BSTXSENDERPROMPT.textContent.split('|')[0].split(' ')[0], textEnquiry.slice(0, textEndIndex)] : textEnquiry.slice(atSymbIndex, textEndIndex).split('|');
+        let tag = textFormat[0].split("&nbsp;")[0].split(" ")[0];
+        let text = textFormat.at(-1);
+        if(text.indexOf("<div>") == 0 && text.indexOf("</div>") == text.length-6) {
+            text = text.slice(text.indexOf("<div>")+5, text.lastIndexOf("</div>"));
+        } else if (text.indexOf("<div>") == -1 && text.indexOf("</div>") == text.length-6) {
+            text = text.slice(0, text.lastIndexOf("</div>"));
+        }
 
-        if (!BLOCKSTACK || lastMessage?.getAttribute('text') == text) {
+
+        if (!BSTXCONTAINER || lastMessage?.getAttribute('text') == text || text == "<br>" || text == "") {
             return false;
         }
-        const d1 = document.createElement('div');
-        const a1 = document.createElement('a');
-        const d2 = document.createElement('div');
-        const date1 = new Date().toLocaleString();
+        if (document.dispatchEvent(new CustomEvent('blockcreate', {detail: { tag: tag, textHTML: text, rawHTMLString: textEnquiry, dateSent: requestDate, parent: BSTXCONTAINER }, cancelable: true}))) {
+            const d1 = document.createElement('div');
+            const a1 = document.createElement('a');
+            const d2 = document.createElement('div');
 
-        d1.classList.add('flex-width');
-        d1.id = "block-" + messageCount;
-        a1.href = "#" +  d1.id;
-        a1.title = date1;
-        d2.classList.add('block-item');
-        d2.setAttribute('tag', tag);
-        d2.setAttribute('text', text);
-        d2.setAttribute('time', date1);
-        if (lastMessage?.getAttribute('tag') == tag) {
-            d2.innerHTML = text;
-        } else {
-            d2.innerHTML = `<small><em>${tag}:</em></small><br>${text}`;
+            d1.classList.add('flex-width');
+            d1.id = "block-" + messageCount;
+            a1.href = "#" +  d1.id;
+            a1.title = requestDate;
+            d2.classList.add('block-item');
+            d2.setAttribute('tag', tag);
+            d2.setAttribute('text', text);
+            d2.setAttribute('time', requestDate);
+            if (lastMessage?.getAttribute('tag') == tag) {
+                d2.innerHTML = text;
+            } else {
+                d2.innerHTML = `<small><em>${tag}:</em></small><br>${text}`;
+            }
+            d2.addEventListener('click', () => copyLink(a1.href));
+
+            BSTXCONTAINER.insertBefore(d1, BSTXCONTAINER.firstChild);
+            d1.appendChild(a1);
+            a1.appendChild(d2);
+
+            //animations
+            _onBlockAnimate(d2, clamp(text.length * 0.01, 0, 1));
+            lastMessage = d2;
         }
-        d2.addEventListener('click', () => copyLink(a1.href));
-
-        BLOCKSTACK.insertBefore(d1, BLOCKSTACK.firstChild);
-        d1.appendChild(a1);
-        a1.appendChild(d2);
-
-        //animations
-        onMessageAnimate(d2, clamp(text.length * 0.01, 0, 1));
 
         // random consts
-        messageCount = BLOCKSTACK.childElementCount;
-        TEXTBOXPROMPT.textContent = tag + " | Type a Word/Phrase";
-        lastMessage = d2;
+        messageCount = BSTXCONTAINER.childElementCount;
+        BSTXSENDERPROMPT.textContent = tag + " | Type a Word/Phrase";
 
-        onMessageSent(tag, text); // TODO: fix the profile.html file lol
+        // TODO: fix the profile.html file lol
         return true;
     }
 
+    /**
+     * 
+     * @param {HTMLElement} this 
+     * @param {Event} ev 
+     */
     function onModeChange(ev) {
+        ev.stopPropagation();
         if (this.value != 0) {
             this.form.submit();
         }
     }
+
+    let lastKey = "";
+    /**
+     * 
+     * @param {HTMLElement} this 
+     * @param {KeyboardEvent} ev 
+     */
     function onTextBoxKeyDown(ev) {
-        switch(ev.key) {
+        ev.stopPropagation();
+        const key = ev.key;
+        switch(key) {
             case "Enter":
                 messageSent = !shiftHeld;
                 break;
@@ -157,46 +211,76 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                 shiftHeld = true;
                 break;
             case " ":
-                if (!this.textContent.includes('|') || !this.textContent.includes('@')) {
+                if (!BSTXSENDER?.textContent.includes('|') || !BSTXSENDER?.textContent.includes('@')) {
                     textSperator = true;
                 }
                 break;
         }
+        if (key != lastKey) {
+            lastKey = key;
+            if (key.match(/[a-z]/i) || key == "Enter") {
+                BSTXSENDER?.focus();
+            }
+            if (key == "Escape") {
+                BSTXSENDER?.blur();
+            }
+        }
     }
+    /**
+     * 
+     * @param {HTMLElement} this 
+     * @param {KeyboardEvent} ev 
+     */
     function onTextBoxKeyUp(ev) {
+        ev.stopPropagation();
         switch(ev.key) {
             case "Shift":
                 shiftHeld = false;
                 break;
         }
     }
+    /**
+     * 
+     * @param {HTMLElement} this 
+     * @param {InputEvent} ev 
+     */
     function onTextBoxInputBefore(ev) {
+        ev.stopPropagation();
         if (textSperator) {
-            TEXTBOX.textContent = formatText(this.textContent);
-            TEXTBOXPROMPT.textContent = this.textContent + "Type a Word/Phrase";
-            moveCaret(window, TEXTBOX.textContent.length);// premove
+            BSTXSENDER.textContent = formatText(this.textContent);
+            BSTXSENDERPROMPT.textContent = this.textContent + "Type a Word/Phrase";
+            moveCaret(window, BSTXSENDER.textContent.length);// premove
         }
     }
+    /**
+     * 
+     * @param {HTMLElement} this 
+     * @param {Event} ev 
+     */
     function onTextBoxInput(ev) {
+        ev.stopPropagation();
         if (messageSent) {
             messageSent = false;
             if (this.innerHTML != "") {
-                onMessageSentBefore(this.innerHTML);
-                this.textContent = "";
+                const currentDate = new Date().toLocaleString();
+                if (document.dispatchEvent(new CustomEvent('beforeblockcreate', {detail: { rawHTMLString: this.innerHTML, dateRequested: currentDate }, cancelable: true}))) {
+                    _onBlockStackBefore(this.innerHTML, currentDate);
+                    this.textContent = "";
+                }
             }
         } else if (textSperator) {
             textSperator = false;
-            moveCaret(window, TEXTBOX.textContent.length);// postmove
+            moveCaret(window, BSTXSENDER.textContent.length);// postmove
         }
-        if (TEXTBOXPROMPT) {
-            TEXTBOXPROMPT.style.visibility = this.textContent != "" ? "hidden" : "visible";
+        if (BSTXSENDERPROMPT) {
+            BSTXSENDERPROMPT.style.visibility = this.textContent != "" ? "hidden" : "visible";
         }
     }
 
 
-    MODESWITCHER?.addEventListener('change', onModeChange);
-    TEXTBOX?.addEventListener('keydown', onTextBoxKeyDown);
-    TEXTBOX?.addEventListener('keyup', onTextBoxKeyUp);
-    TEXTBOX?.addEventListener('input', onTextBoxInput);
-    TEXTBOX?.addEventListener('beforeinput', onTextBoxInputBefore);
+    MODESWITCHER?.addEventListener('change', onModeChange, {passive: true});
+    BSTXSENDER?.addEventListener('input', onTextBoxInput, {passive: true});
+    BSTXSENDER?.addEventListener('beforeinput', onTextBoxInputBefore, {passive: true});
+    document.addEventListener('keydown', onTextBoxKeyDown, {passive: true});
+    document.addEventListener('keyup', onTextBoxKeyUp, {passive: true});
 });

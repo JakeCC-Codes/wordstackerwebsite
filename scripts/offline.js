@@ -5,22 +5,25 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         blockStackLoad.innerHTML = localStorage.getItem("localBlockStack");
     }
     
-    function onClearBlockStack() {
+    function onBlockStackClear(ev) {
         localStorage.removeItem("localBlockStack");
     }
-    blockStackClear?.addEventListener('click', onClearBlockStack);
-});
 
-function onMessageSent(tag, text) {
-    const element = document.getElementById("blockstack");
-    if (element) {
-        localStorage.setItem("localBlockStack", element.innerHTML);
-        const messageCount = element.childElementCount;
+    /**
+     * 
+     * @param {CustomEvent<{ tag: string; textHTML: string; rawHTMLString: string; dateSent: any; }>} ev 
+     */
+    function onBlockCreate(ev) {
+        const blockStack = ev.detail.parent;
+        localStorage.setItem("localBlockStack", blockStack.innerHTML);
+        const messageCount = blockStack.childElementCount;
         if (messageCount > 5000) {
             // Turn on dark mode
             console.log("darkmode!");
         }
     }
-}
+    blockStackClear?.addEventListener('click', onBlockStackClear, {passive: true});
+    document.addEventListener('blockcreate', onBlockCreate, {passive: true});
+});
 
 //localStorage.removeItem("localMessages");

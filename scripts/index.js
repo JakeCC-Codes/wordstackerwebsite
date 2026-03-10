@@ -1,4 +1,8 @@
+window.addEventListener('DOMContentLoaded', (ev) => {
 
-function onMessageSent(tag, text) {
-    // Database Management...
-}
+    function onBlockCreate(ev) {
+        // Database Management...
+    }
+
+    document.addEventListener('blockcreate', onBlockCreate, {passive: true});
+})
