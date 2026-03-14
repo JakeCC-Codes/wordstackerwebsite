@@ -2,6 +2,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     const WOBBLELIMIT = 400;
     const WOBBLESPEED = 0.75;
     const FALLSPEED = 0.75; // TODO: Space is at 10,500 blocks, blocks fall slower and darkmode
+    // TODO: When you click on the logo it changes colour (Easter Egg)
 
     const MODESWITCHER = document.getElementById("modeswitcher");
     const BSTXSENDER = document.getElementById("blockstacksender");
@@ -160,7 +161,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             return false;
         }
         const atSymbIndex = textEnquiry.lastIndexOf('@');
-        const textEndIndex = textEnquiry.lastIndexOf("<div>");
+        const textEndIndex = textEnquiry.lastIndexOf("<div><br></div>");
         const textFormat = textEnquiry.lastIndexOf('|') == -1 ? [BSTXSENDERPROMPT.textContent.split('|')[0].split(' ')[0], textEnquiry.slice(0, textEndIndex)] : textEnquiry.slice(atSymbIndex, textEndIndex).split('|');
         let tag = textFormat[0].split("&nbsp;")[0].split(" ")[0];
         let text = textFormat.at(-1);
@@ -217,6 +218,13 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             case " ":
                 if (!BSTXSENDER?.textContent.includes('|') || !BSTXSENDER?.textContent.includes('@')) {
                     textSperator = true;
+                }
+                break;
+            case "Tab":
+                if (document.activeElement == BSTXSENDER && (!BSTXSENDER?.textContent.includes('|') || !BSTXSENDER?.textContent.includes('@'))) {
+                    ev.preventDefault();
+                    BSTXSENDER.textContent = BSTXSENDERPROMPT?.textContent.slice(0, BSTXSENDERPROMPT?.textContent.indexOf("|")+1);
+                    moveCaret(window, BSTXSENDER.textContent.length);// premove
                 }
                 break;
         }
@@ -285,7 +293,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     MODESWITCHER?.addEventListener('change', onModeChange, {passive: true});
     BSTXSENDER?.addEventListener('input', onTextBoxInput, {passive: true});
     BSTXSENDER?.addEventListener('beforeinput', onTextBoxInputBefore, {passive: true});
-    document.addEventListener('keydown', onTextBoxKeyDown, {passive: true});
+    document.addEventListener('keydown', onTextBoxKeyDown);
     document.addEventListener('keyup', onTextBoxKeyUp, {passive: true});
     document.addEventListener('sudoblockcreate', (ev) => {
         _BlockCreate(ev.detail.tag, ev.detail.text, ev.detail.requestDate);
