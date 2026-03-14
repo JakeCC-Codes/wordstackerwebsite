@@ -161,7 +161,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             return false;
         }
         const atSymbIndex = textEnquiry.lastIndexOf('@');
-        const textEndIndex = textEnquiry.lastIndexOf("<div><br></div>");
+        const textEndIndex = textEnquiry.lastIndexOf("<div><br></div>"); //TODO: Fix bug where random divs appear, randomly formatting text
         const textFormat = textEnquiry.lastIndexOf('|') == -1 ? [BSTXSENDERPROMPT.textContent.split('|')[0].split(' ')[0], textEnquiry.slice(0, textEndIndex)] : textEnquiry.slice(atSymbIndex, textEndIndex).split('|');
         let tag = textFormat[0].split("&nbsp;")[0].split(" ")[0];
         let text = textFormat.at(-1);
@@ -220,6 +220,8 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                     textSperator = true;
                 }
                 break;
+            case "Alt":
+            case "Insert":
             case "Tab":
                 if (document.activeElement == BSTXSENDER && (!BSTXSENDER?.textContent.includes('|') || !BSTXSENDER?.textContent.includes('@'))) {
                     ev.preventDefault();
