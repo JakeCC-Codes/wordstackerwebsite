@@ -144,7 +144,8 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         a1.appendChild(d2);
 
         //animations
-        _onBlockAnimate(d2, clamp(text.length * 0.01, 0, 1));
+        let power = text.length - (text.split(/\W/g).length-1)*3;
+        _onBlockAnimate(d2, clamp(power * 0.01, 0, 1));
         lastMessage = d2;
     }
 

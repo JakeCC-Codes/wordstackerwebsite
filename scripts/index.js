@@ -7,7 +7,7 @@ const WOBBLESPEED = 0.75;
 const WOBBLETHRESHOLD = 400;
 
 async function loadBlockStack() {
-    const { data, error } = await supabaseInstance.from('blockstacks').select('*');
+    const { data, error } = await supabaseInstance.from('blockstacks').select();
 
     if (error) {
         console.error(error);
