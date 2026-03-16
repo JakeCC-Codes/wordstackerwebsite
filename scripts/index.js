@@ -7,7 +7,7 @@ const WOBBLESPEED = 0.75;
 const WOBBLETHRESHOLD = 400;
 
 async function loadBlockStack() {
-    const { data, error } = await supabaseInstance.from('blockstacks').select();
+    const { data, error } = await supabaseInstance.from('blockstacks').select().order('created_at', {ascending: true});
 
     if (error) {
         console.error(error);
@@ -22,7 +22,7 @@ async function loadBlockStack() {
 
             blocks.push(`
                 <div id="block-${x.id}" class="flex-width">
-                    <a href="#block-${x.id}" title="${timeYDate}">
+                    <a href="#block-${i}" title="${timeYDate}">
                         <div class="block-item wobble-item" tag="${x.tag}" text="${x.text}" time="${timeYDate}">
                             ${showTag}${x.text}
                         </div>
