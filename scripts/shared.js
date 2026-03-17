@@ -12,6 +12,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     let messageSent = false;
     let shiftHeld = false;
     let textSperator = false;
+    let textPaste = false;
     let messageCount = 0;
     let lastMessage;
 
@@ -56,8 +57,13 @@ window.addEventListener('DOMContentLoaded', (ev) => {
      * @returns {string}
      */
     function formatText(textSolution) {
-        textSolution = textSolution + " | ";
-        if (textSolution[0] != '@') {
+        const prevSolution = BSTXSENDERPROMPT?.textContent.split('|')[0].split(' ')[0];
+        if (prevSolution != "@anonymous") {
+            textSolution = prevSolution + " | " + textSolution + " ";
+        } else {
+            textSolution = textSolution + " | ";
+        }
+        if (textSolution.lastIndexOf('@', textSolution.indexOf('|')) == -1) {
             textSolution = '@' + textSolution;
         }
         return textSolution;
@@ -227,7 +233,8 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                 if (document.activeElement == BSTXSENDER && (!BSTXSENDER?.textContent.includes('|') || !BSTXSENDER?.textContent.includes('@'))) {
                     ev.preventDefault();
                     BSTXSENDER.textContent = BSTXSENDERPROMPT?.textContent.slice(0, BSTXSENDERPROMPT?.textContent.indexOf("|")+1);
-                    moveCaret(window, BSTXSENDER.textContent.length);// premove
+                    textPaste = true;
+                    setTimeout(() => {moveCaret(window, BSTXSENDER.textContent.length);}, 30);// premove
                 }
                 break;
         }
@@ -263,7 +270,9 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         ev.stopPropagation();
         if (textSperator) {
             BSTXSENDER.textContent = formatText(this.textContent);
-            BSTXSENDERPROMPT.textContent = this.textContent + "Type a Word/Phrase";
+            BSTXSENDERPROMPT.textContent = this.textContent.split('|')[0] + "| Type a Word/Phrase";
+        }
+        if (textSperator || textPaste) {
             moveCaret(window, BSTXSENDER.textContent.length);// premove
         }
     }
@@ -283,8 +292,9 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                     this.textContent = "";
                 }
             }
-        } else if (textSperator) {
+        } else if (textSperator || textPaste) {
             textSperator = false;
+            textPaste = false;
             moveCaret(window, BSTXSENDER.textContent.length);// postmove
         }
         if (BSTXSENDERPROMPT) {
@@ -295,7 +305,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
 
     MODESWITCHER?.addEventListener('change', onModeChange, {passive: true});
     BSTXSENDER?.addEventListener('input', onTextBoxInput, {passive: true});
-    BSTXSENDER?.addEventListener('beforeinput', onTextBoxInputBefore, {passive: true});
+    BSTXSENDER?.addEventListener('beforeinput', onTextBoxInputBefore);
     document.addEventListener('keydown', onTextBoxKeyDown);
     document.addEventListener('keyup', onTextBoxKeyUp, {passive: true});
     document.addEventListener('sudoblockcreate', (ev) => {
