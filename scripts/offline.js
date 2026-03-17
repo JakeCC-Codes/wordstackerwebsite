@@ -92,6 +92,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         if (messageCount < 1) {
             leaderboardTag = ev.detail.tag;
             localStorage.setItem("leaderboardTag", leaderboardTag);
+            _LoadLeaderboard();
         }
 
         const { error } = await supabaseInstance.rpc('upsert_bstx_leaderboard_solo', {bstxtag: leaderboardTag, bstxcount: newBlockCount, bstxquote: ev.detail.textHTML});
