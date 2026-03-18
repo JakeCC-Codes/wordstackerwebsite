@@ -6,6 +6,9 @@
     --highlight-block-colour: white;
     --highlight-panel-colour: gray;
     --texthint-colour: #BBB2A5;
+    --ground: #ffd8bc;
+    --shadow: #e6c0a4;
+    --shadowTEXT: #cda98e;
 }
 
 body {
@@ -39,16 +42,17 @@ a, a:hover, a:visited {
 }
 
 .groundTile {
-    background-color: #e0cdbd;
+    background-color: var(--ground);
+    border-radius: 40px;
     height: 300px;
     z-index: 1;
 }
 .shadowTile {
     position: absolute;
-    background-color: #c9b3ad;
+    background-color: var(--shadow);
     margin-left: 46%;
     width: 140px;
-    padding-bottom: 10px;
+    padding-bottom: 9px;
     transform:translateY(-300px);
     border-radius: 400px;
     z-index: 2;
@@ -56,7 +60,7 @@ a, a:hover, a:visited {
 
 .shadowHint {
     position: absolute;
-    color: #a5918a;
+    color: var(--shadowTEXT);
     transform:translate(1%, -200px);
     z-index: 2;
 }

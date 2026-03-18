@@ -21,7 +21,7 @@ async function loadBlockStack() {
             const timeYDate = new Date(x.created_at).toLocaleString();
 
             blocks.push(`
-                <div id="block-${x.id}" class="flex-width">
+                <div id="block-${i}" class="flex-width">
                     <a href="#block-${i}" title="${timeYDate}">
                         <div class="block-item wobble-item" tag="${x.tag}" text="${x.text}" time="${timeYDate}">
                             ${showTag}${x.text}
@@ -52,6 +52,7 @@ async function loadBlockStack() {
                 iterationStart: Math.random()
             }).play();
         }
+        document.dispatchEvent(new CustomEvent('towerload', { detail:{loader:blockStack, tower:blockStack.innerHTML} }));
     }
 
     supabaseInstance.channel('public:blockstacks').on('postgres_changes', { 

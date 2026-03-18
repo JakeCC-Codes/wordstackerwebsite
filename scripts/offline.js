@@ -9,10 +9,11 @@ let upsertTimeoutID = undefined;
 let rankPos = undefined;
 if (blockStackLoad) {
     blockStackLoad.innerHTML = localStorage.getItem("localBlockStack");
+    document.dispatchEvent(new CustomEvent('towerload', { detail:{loader:blockStackLoad, tower:blockStackLoad.innerHTML} }));
 }
 if (bstxPrompt) {
     bstxPrompt.textContent = leaderboardTag + " | Type a Word/Phrase"; // TODO: make helper function... eventually...
-}
+} // TODO: Prevent multiplayer spam (make ghost blocks if they go before cooldown ends.)
 
 /**
  * Converts 1, 2 and 3 to 1st, 2nd and 3rd.
@@ -23,7 +24,7 @@ function toOrdinal(x) {
     const ones = x % 10;
     const tens = Math.floor(x / 10) % 10;
     let str = x.toString();
-    if (tens == 1) { return str + 'th'; }
+    if (tens === 1) { return str + 'th'; }
     switch(ones) {
         case 1:
             str += 'st';
@@ -74,7 +75,7 @@ async function _LoadLeaderboard() {
             rankPos = undefined;
             for (let i=0; i<data.length; i++) {
                 const entry = data[i];
-                if (entry.tag == leaderboardTag) { rankPos = i; }
+                if (entry.tag === leaderboardTag) { rankPos = i; }
                 if (i > entryCap) { if(rankPos) { break; } continue; }
                 const rank = toOrdinalName(i+1);
                 let rankTitle = ``;
@@ -87,7 +88,7 @@ async function _LoadLeaderboard() {
         }
         if (userboard) {
             let userEntry = `<col width="20%"/><col width="60%"/><col width="20%"/><tr><td>${leaderboardTag}</td><td>...</td><td>...</td></tr>`;
-            if (rankPos != undefined) {
+            if (rankPos !== undefined) {
                 const userData = data[rankPos];
                 userEntry = `<col width="20%"/><col width="60%"/><col width="20%"/><tr><td colspan="3"><strong>You are placed ${toOrdinal(rankPos+1)}</strong></td></tr><tr><td>${leaderboardTag}</td><td>"${userData.quote}"</td><td>${userData.blockstackcount}</td></tr>`;
             }
@@ -116,7 +117,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             // Turn on dark mode
             console.log("darkmode!");
         }
-        if (newBlockCount == 1) {
+        if (newBlockCount === 1) {
             leaderboardTag = ev.detail.tag;
             localStorage.setItem("leaderboardTag", leaderboardTag);
         }

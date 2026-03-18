@@ -1,3 +1,47 @@
+const BSTXCONTAINERCOUNT = document.getElementById("blockstackcount");
+let realStackSize = 0;
+let stackSize = 0;
+
+/**
+ * 
+ * @param {number} v 
+ * @param {number} m 
+ * @param {number} M 
+ * @returns {number}
+ */
+function clamp(v, m, M) {
+    return v < m ? m : v > M ? M : v;
+}
+function computeFloorStackGapHeight(towerLoaderHeight, anim = false) {
+    const FLOORSTACKGAP = document.getElementById("floorstackgap");
+    const desiredGapSize = 162;
+    if (FLOORSTACKGAP && towerLoaderHeight) {
+        const gapSize = clamp(desiredGapSize - towerLoaderHeight, 0, desiredGapSize);
+        if (gapSize === 0 || gapSize === desiredGapSize || !anim) {
+            FLOORSTACKGAP.style.height = gapSize + "px";
+        } else {
+            FLOORSTACKGAP.animate([{height: gapSize + "px"}], {
+                duration: 70,
+                easing: "ease-out",
+                fill: "forwards"
+            }).play();
+        }
+    }
+}
+
+document.addEventListener('towerload', function(ev) {
+    const towerLoader = ev.detail.loader;
+    stackSize = towerLoader.childElementCount;
+    document.getElementById(window.location.hash.split('#').at(-1))?.scrollIntoView({behavior: "smooth", block: "center"});
+
+    if (BSTXCONTAINERCOUNT) {
+        BSTXCONTAINERCOUNT.textContent = "Blocks Stacked: " + stackSize;
+        BSTXCONTAINERCOUNT.style.visibility = "visible";
+    }
+    realStackSize = towerLoader.getBoundingClientRect().height;
+    computeFloorStackGapHeight(realStackSize);
+}, { passive: true });
+
 window.addEventListener('DOMContentLoaded', (ev) => {
     const WOBBLELIMIT = 400;
     const WOBBLESPEED = 0.75;
@@ -8,24 +52,11 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     const BSTXSENDER = document.getElementById("blockstacksender");
     const BSTXSENDERPROMPT = document.getElementById("blockstackinputprompt");
     const BSTXCONTAINER = document.getElementById("blockstack");
-    const BSTXCONTAINERCOUNT = document.getElementById("blockstackcount");
     let messageSent = false;
     let shiftHeld = false;
     let textSperator = false;
     let textPaste = false;
-    let messageCount = 0;
     let lastMessage;
-
-    /**
-     * 
-     * @param {number} v 
-     * @param {number} m 
-     * @param {number} M 
-     * @returns {number}
-     */
-    function clamp(v, m, M) {
-        return v < m ? m : v > M ? M : v;
-    }
 
     /**
      * 
@@ -44,7 +75,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             }
         } else if ( (sel = win.document.selection) ) {
             // IE <= 8
-            if (sel.type != "Control") {
+            if (sel.type !== "Control") {
                 range = sel.createRange();
                 range.move("character", charCount);
                 range.select();
@@ -58,12 +89,12 @@ window.addEventListener('DOMContentLoaded', (ev) => {
      */
     function formatText(textSolution) {
         const prevSolution = BSTXSENDERPROMPT?.textContent.split('|')[0].split(' ')[0];
-        if (prevSolution != "@anonymous") {
+        if (prevSolution !== "@anonymous") {
             textSolution = prevSolution + " | " + textSolution + " ";
         } else {
             textSolution = textSolution + " | ";
         }
-        if (textSolution.lastIndexOf('@', textSolution.indexOf('|')) == -1) {
+        if (textSolution.lastIndexOf('@', textSolution.indexOf('|')) === -1) {
             textSolution = '@' + textSolution;
         }
         return textSolution;
@@ -89,8 +120,8 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         const randAudioValue = Math.floor(Math.random() * 10) % 5 +1;
         // Wobble Animation
         blockObj.animate([ // Clamp this value lol
-            { marginLeft: (messageCount/WOBBLELIMIT) + 'px'},
-            { marginLeft: -(messageCount/WOBBLELIMIT) + 'px'}
+            { marginLeft: (stackSize/WOBBLELIMIT) + 'px'},
+            { marginLeft: -(stackSize/WOBBLELIMIT) + 'px'}
         ], {
             duration: WOBBLESPEED * 1000,
             direction: "alternate",
@@ -99,11 +130,12 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         }).play();
 
         // Falling Animation
+        const fallAnimDur = (FALLSPEED - intensity*0.5) * 1000;
         let fall = blockObj.animate([
             { marginTop: '-500px' },
             { marginTop: '0px' }
         ], {
-            duration: (FALLSPEED - intensity*0.5) * 1000, // Add settings for this value
+            duration: fallAnimDur, // Add settings for this value
             easing: "linear", // In the robble use linear In space use ease-out
         });
         fall.play();
@@ -119,10 +151,12 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                 direction: "reverse"
             }).play();
             if (BSTXCONTAINERCOUNT) {
-                BSTXCONTAINERCOUNT.textContent = "Blocks Stacked: " + messageCount;
-                BSTXCONTAINERCOUNT.style.visibility = "visible";
+                BSTXCONTAINERCOUNT.textContent = "Blocks Stacked: " + stackSize;
             }
         });
+        setTimeout(function() {
+            computeFloorStackGapHeight(realStackSize += blockObj.getBoundingClientRect().height, true);
+        }, fallAnimDur*0.9);
     }
 
     function _BlockCreate(tag, text, requestDate) {
@@ -131,14 +165,14 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         const d2 = document.createElement('div');
 
         d1.classList.add('flex-width');
-        d1.id = "block-" + messageCount;
+        d1.id = "block-" + stackSize;
         a1.href = "#" +  d1.id;
         a1.title = requestDate;
         d2.classList.add('block-item');
         d2.setAttribute('tag', tag);
         d2.setAttribute('text', text);
         d2.setAttribute('time', requestDate);
-        if (lastMessage?.getAttribute('tag') == tag) {
+        if (lastMessage?.getAttribute('tag') === tag) {
             d2.innerHTML = text;
         } else {
             d2.innerHTML = `<small><em>${tag}:</em></small><br>${text}`;
@@ -164,22 +198,22 @@ window.addEventListener('DOMContentLoaded', (ev) => {
      * @returns {boolean}
      */
     function _onBlockStackBefore(textEnquiry, requestDate) {
-        if (textEnquiry == "") {
+        if (textEnquiry === "") {
             return false;
         }
         const atSymbIndex = textEnquiry.indexOf('@');
         const textEndIndex = textEnquiry.lastIndexOf("<div><br></div>"); //TODO: Fix bug where random divs appear, randomly formatting text
-        const textFormat = textEnquiry.lastIndexOf('|') == -1 ? [BSTXSENDERPROMPT.textContent.split('|')[0].split(' ')[0], textEnquiry.slice(0, textEndIndex)] : textEnquiry.slice(atSymbIndex, textEndIndex).split('|');
+        const textFormat = textEnquiry.lastIndexOf('|') === -1 ? [BSTXSENDERPROMPT.textContent.split('|')[0].split(' ')[0], textEnquiry.slice(0, textEndIndex)] : textEnquiry.slice(atSymbIndex, textEndIndex).split('|');
         let tag = textFormat[0].split("&nbsp;")[0].split(" ")[0];
         let text = textFormat.at(-1);
-        if(text.indexOf("<div>") == 0 && text.indexOf("</div>") == text.length-6) {
+        if(text.indexOf("<div>") === 0 && text.indexOf("</div>") === text.length-6) {
             text = text.slice(text.indexOf("<div>")+5, text.lastIndexOf("</div>"));
-        } else if (text.indexOf("<div>") == -1 && text.indexOf("</div>") == text.length-6) {
+        } else if (text.indexOf("<div>") === -1 && text.indexOf("</div>") === text.length-6) {
             text = text.slice(0, text.lastIndexOf("</div>"));
         }
 
 
-        if (!BSTXCONTAINER || lastMessage?.getAttribute('text') == text || text == "<br>" || text == "") {
+        if (!BSTXCONTAINER || lastMessage?.getAttribute('text') === text || text === "<br>" || text === "") {
             return false;
         }
         if (document.dispatchEvent(new CustomEvent('blockcreate', {detail: { tag: tag, textHTML: text, rawHTMLString: textEnquiry, dateSent: requestDate, parent: BSTXCONTAINER }, cancelable: true}))) {
@@ -187,7 +221,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         }
 
         // random consts
-        messageCount = BSTXCONTAINER.childElementCount;
+        stackSize = BSTXCONTAINER.childElementCount;
         BSTXSENDERPROMPT.textContent = tag + " | Type a Word/Phrase";
 
         // TODO: fix the profile.html file lol
@@ -201,7 +235,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
      */
     function onModeChange(ev) {
         ev.stopPropagation();
-        if (this.value != 0) {
+        if (this.value !== 0) {
             this.form.submit();
         }
     }
@@ -230,7 +264,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             case "Alt":
             case "Insert":
             case "Tab":
-                if (document.activeElement == BSTXSENDER && (!BSTXSENDER?.textContent.includes('|') || !BSTXSENDER?.textContent.includes('@'))) {
+                if (document.activeElement === BSTXSENDER && (!BSTXSENDER?.textContent.includes('|') || !BSTXSENDER?.textContent.includes('@'))) {
                     ev.preventDefault();
                     BSTXSENDER.textContent = BSTXSENDERPROMPT?.textContent.slice(0, BSTXSENDERPROMPT?.textContent.indexOf("|")+1);
                     textPaste = true;
@@ -238,12 +272,12 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                 }
                 break;
         }
-        if (key != lastKey) {
+        if (key !== lastKey) {
             lastKey = key;
-            if (key.match(/[a-z]/i) || key == "Enter") {
+            if (key.match(/[a-z]/i) || key === "Enter") {
                 BSTXSENDER?.focus();
             }
-            if (key == "Escape") {
+            if (key === "Escape") {
                 BSTXSENDER?.blur();
             }
         }
@@ -285,7 +319,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         ev.stopPropagation();
         if (messageSent) {
             messageSent = false;
-            if (this.innerHTML != "") {
+            if (this.innerHTML !== "") {
                 const currentDate = new Date().toLocaleString();
                 if (document.dispatchEvent(new CustomEvent('beforeblockcreate', {detail: { rawHTMLString: this.innerHTML, dateRequested: currentDate }, cancelable: true}))) {
                     _onBlockStackBefore(this.innerHTML, currentDate);
@@ -298,7 +332,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             moveCaret(window, BSTXSENDER.textContent.length);// postmove
         }
         if (BSTXSENDERPROMPT) {
-            BSTXSENDERPROMPT.style.visibility = this.textContent != "" ? "hidden" : "visible";
+            BSTXSENDERPROMPT.style.visibility = this.textContent !== "" ? "hidden" : "visible";
         }
     }
 
@@ -310,6 +344,6 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     document.addEventListener('keyup', onTextBoxKeyUp, {passive: true});
     document.addEventListener('sudoblockcreate', (ev) => {
         _BlockCreate(ev.detail.tag, ev.detail.text, ev.detail.requestDate);
-        messageCount = BSTXCONTAINER.childElementCount;
+        stackSize = BSTXCONTAINER.childElementCount;
     }, {passive: true});
 });
