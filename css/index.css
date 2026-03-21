@@ -3,7 +3,7 @@
     --bg-colour: #FFE8D3;
     --bg-panel-colour: lightgoldenrodyellow;
     --blockstack-colour: peachpuff;
-    --highlight-block-colour: white;
+    --highlight-block-colour: color-mix(in srgb, white 75%, var(--accent-colour) 25%);
     --highlight-panel-colour: gray;
     --texthint-colour: #BBB2A5;
     --tag-colour: #cda98e;
@@ -34,8 +34,19 @@ a, a:hover, a:visited {
     color: var(--accent-colour);
 }
 
-.block-stack {
+.blockstack-offset {
     margin-top: 250px;
+}
+.blockstack-bg-hightlight {
+    position: absolute;
+    width:99%;
+    height: 30px;
+    background-color: var(--highlight-block-colour);
+    opacity: 0%;
+    z-index: 0;
+}
+
+.block-stack {
     z-index: 3;
 }
 

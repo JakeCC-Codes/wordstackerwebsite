@@ -12,21 +12,15 @@ let stackSize = 0;
 function clamp(v, m, M) {
     return v < m ? m : v > M ? M : v;
 }
-function computeFloorStackGapHeight(towerLoaderHeight, anim = false) {
+function computeFloorStackGapHeight(towerLoaderHeight) {
     const FLOORSTACKGAP = document.getElementById("floorstackgap");
     const desiredGapSize = 162;
     if (FLOORSTACKGAP && towerLoaderHeight) {
         const gapSize = clamp(desiredGapSize - towerLoaderHeight, 0, desiredGapSize);
-        if (gapSize === 0 || gapSize === desiredGapSize || !anim) {
-            FLOORSTACKGAP.style.height = gapSize + "px";
-        } else {
-            FLOORSTACKGAP.animate([{height: gapSize + "px"}], {
-                duration: 70,
-                easing: "ease-out",
-                fill: "forwards"
-            }).play();
-        }
+        FLOORSTACKGAP.style.height = gapSize + "px";
+        return gapSize;
     }
+    return -1;
 }
 
 document.addEventListener('towerload', function(ev) {
@@ -52,6 +46,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     const BSTXSENDER = document.getElementById("blockstacksender");
     const BSTXSENDERPROMPT = document.getElementById("blockstackinputprompt");
     const BSTXCONTAINER = document.getElementById("blockstack");
+    const BSTXBGHIGHLIGHT = document.getElementById("bstxbghightlight");
     let messageSent = false;
     let shiftHeld = false;
     let textSperator = false;
@@ -116,6 +111,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
      * @param {HTMLDivElement} blockObj 
      * @param {number} intensity 
      */
+    let bstxBgHighlightAnim = undefined;
     function _onBlockAnimate(blockObj, intensity = 0) {
         const randAudioValue = Math.floor(Math.random() * 10) % 5 +1;
         // Wobble Animation
@@ -141,21 +137,51 @@ window.addEventListener('DOMContentLoaded', (ev) => {
         fall.play();
 
         fall.finished.then(() => {
+            const r = Math.random() >= 0.5 ? 1 : -1;
             let sfx = new Audio("/audio/sfx_blockfall" + randAudioValue + ".mp3");
             sfx.volume = clamp(intensity + 0.2, 0.2, 1);
             sfx.play();
             blockObj.animate([
-                {backgroundColor: 'lightyellow'}
+                {backgroundColor: 'var(--highlight-block-colour)'}
             ], {
                 duration: (intensity*5+1) * 600,
                 direction: "reverse"
             }).play();
+            blockObj.animate([ // Clamp this value lol
+                {marginLeft: (5*r) + "px"},
+                {marginLeft: -(6*r) + "px"}
+            ], {
+                duration: 20,
+                direction: "alternate",
+                iterations: "3",
+                easing: "ease-in-out"
+            }).play();
+
+            if (BSTXBGHIGHLIGHT) {
+                if (bstxBgHighlightAnim) {
+                    bstxBgHighlightAnim.cancel();
+                    bstxBgHighlightAnim = undefined;
+                }
+                BSTXBGHIGHLIGHT.style.height = `${blockObj.getBoundingClientRect().height}px`;
+                bstxBgHighlightAnim = BSTXBGHIGHLIGHT.animate([
+                    {opacity: '20%'}
+                ], {
+                    duration: (intensity*5+1) * 1200,
+                    easing: "ease-in-out",
+                    direction: "reverse"
+                });
+                bstxBgHighlightAnim.play();
+            }
+            
             if (BSTXCONTAINERCOUNT) {
                 BSTXCONTAINERCOUNT.textContent = "Blocks Stacked: " + stackSize;
             }
+
         });
         setTimeout(function() {
-            computeFloorStackGapHeight(realStackSize += blockObj.getBoundingClientRect().height, true);
+            if (computeFloorStackGapHeight(realStackSize += blockObj.getBoundingClientRect().height) !== 0) {
+                fall.finish();
+            }
         }, fallAnimDur*0.9);
     }
 
