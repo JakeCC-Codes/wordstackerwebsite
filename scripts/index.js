@@ -2,34 +2,44 @@ const SUPABASE_URL = 'https://hdwkextgvjynwcfzyrdl.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_FhQpe_upTFVHfUcmfDNRhA_jZQI1UO4';
 const supabaseInstance = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const blockStack = document.getElementById("blockstack");
-const WOBBLELIMIT = 50;
+const WOBBLELIMIT = 500;
 const WOBBLESPEED = 0.75;
 const WOBBLETHRESHOLD = 400;
 
 async function loadBlockStack() {
-    const { data, error } = await supabaseInstance.from('blockstacks').select().order('created_at', {ascending: true});
+    let blockChunk = {data: [], error: ''};
+    let jRange = [0, 999];
+    let blocks = [];
+    let prevTag = '';
+    do {
+        blockChunk = await supabaseInstance.from('blockstacks').select().order('created_at', {ascending: true}).range(jRange[0], jRange[1]);
 
-    if (error) {
-        console.error(error);
-    } else if (blockStack) {
-        let blocks = [];
-        let blockstackLength = data.length;
-        for (let i=0; i<blockstackLength; i++) {
-            const x = data[i];
-            const prevTag = data[i - 1]?.tag;
-            const showTag = x.tag !== prevTag ? `<br><small><em class="tag-style">${x.tag}</em></small>` : '';
-            const timeYDate = new Date(x.created_at).toLocaleString();
+        if (blockChunk.error) {
+            console.error(blockChunk.error);
+            break;
+        } else if (blockStack) {
+            let blockstackLength = blockChunk.data.length;
+            for (let i=0; i<blockstackLength; i++) {
+                const x = blockChunk.data[i];
+                const showTag = x.tag !== prevTag ? `<small><em class="tag-style">${x.tag}</em></small>` : '';
+                const timeYDate = new Date(x.created_at).toLocaleString();
 
-            blocks.push(`
-                <div id="block-${i}" class="flex-width">
-                    <a href="#block-${i}" title="${timeYDate}">
-                        <div class="block-item wobble-item" tag="${x.tag}" text="${x.text}" time="${timeYDate}">
-                            ${x.text}${showTag}
-                        </div>
-                    </a>
-                </div>`
-            );
+                blocks.push(`
+                    <div id="block-${i+jRange[0]}" class="flex-width">
+                        <a href="#block-${i+jRange[0]}" title="${timeYDate}">
+                            <div class="block-item wobble-item" tag="${x.tag}" text="${x.text}" time="${timeYDate}">
+                                ${x.text}${showTag}
+                            </div>
+                        </a>
+                    </div>`
+                );
+                prevTag = x.tag;
+            }
         }
+        jRange[0] += 1000;
+        jRange[1] += 1000;
+    } while (blockChunk.data.length === 1000)
+    if (!blockChunk.error) {
         blockStack.innerHTML = blocks.reverse().join('');
 
         const hiddenItems = document.getElementsByClassName("render-hidden");
