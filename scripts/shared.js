@@ -105,6 +105,25 @@ window.addEventListener('DOMContentLoaded', (ev) => {
             console.error('Failed to copy link: ', err);
         });
     }
+    /**
+     * 
+     * @param {number} x 
+     * @param {number} y 
+     * @param {number} time 
+     */
+    function shakeBar(x, y, time) {
+        let bar = document.getElementById('bstxsenderbar');
+        if (bar) {
+            bar.animate([
+                {marginLeft: `${x}px`, marginTop: `${y}px`}
+            ], {
+                duration: time,
+                direction: "alternate",
+                iterations: 2,
+                easing: 'ease-in-out'
+            }).play();
+        }
+    }
 
     /**
      * 
@@ -271,6 +290,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     }
 
     let lastKey = "";
+    let animDebounce = undefined;
     /**
      * 
      * @param {HTMLElement} this 
@@ -279,6 +299,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
     function onTextBoxKeyDown(ev) {
         ev.stopPropagation();
         const key = ev.key;
+        const isLetter = key.match(/[a-z]/i);
         switch(key) {
             case "Enter":
                 messageSent = !shiftHeld;
@@ -301,10 +322,22 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                     setTimeout(() => {moveCaret(window, BSTXSENDER.textContent.length);}, 30);// premove
                 }
                 break;
+            case "Backspace":
+                if (!animDebounce) {
+                    shakeBar(-5, 0, 60);
+                    animDebounce = setTimeout(() => {animDebounce = undefined;}, 65);// premove
+                }
+                break;
+            default:
+                if (isLetter && !animDebounce) {
+                    shakeBar(2, 0.1, 100);
+                    animDebounce = setTimeout(() => {animDebounce = undefined;}, 90);// premove
+                }
+                break;
         }
         if (key !== lastKey) {
             lastKey = key;
-            if (key.match(/[a-z]/i) || key === "Enter") {
+            if (isLetter || key === "Enter") {
                 BSTXSENDER?.focus();
             }
             if (key === "Escape") {
@@ -354,6 +387,7 @@ window.addEventListener('DOMContentLoaded', (ev) => {
                 if (document.dispatchEvent(new CustomEvent('beforeblockcreate', {detail: { rawHTMLString: this.innerHTML, dateRequested: currentDate }, cancelable: true}))) {
                     _onBlockStackBefore(this.innerHTML, currentDate);
                     this.textContent = "";
+                    shakeBar((Math.round(Math.random()) - 0.5)*8, (Math.round(Math.random()) - 0.5)*8, 60);
                 }
             }
         } else if (textSperator || textPaste) {
